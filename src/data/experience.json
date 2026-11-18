@@ -1,0 +1,48 @@
+[
+  {
+    "period": "2012 — Present",
+    "role": {
+      "en": "Senior Web Developer"
+    },
+    "company": "The British University in Egypt (BUE)",
+    "points": {
+      "en": [
+        "Designed and developed the BUE Library website, enhancing user experience and functionality.",
+        "Led the design and maintenance of LibGuides, LibCal, and system booking websites.",
+        "Acted as Sub-Webmaster for the BUE main website, ensuring seamless performance and updates.",
+        "Created multimedia content, including videos, graphics, and promotional materials for the library’s digital presence.",
+        "Assisted with RFID technology integration, database troubleshooting, and technical reporting.",
+        "Developed virtual library tours and gamification features to enhance user engagement."
+      ]
+    },
+    "achievements": {
+      "en": [
+        "Successfully launched interactive digital platforms, boosting library user engagement and accessibility.",
+        "Produced a series of videos for the BUE Library YouTube channel, improving the university’s digital outreach."
+      ]
+    }
+  },
+  {
+    "period": "2011 — 2012",
+    "role": {
+      "en": "Graphic Designer"
+    },
+    "company": "Future Company",
+    "points": {
+      "en": [
+        "Designed print and digital materials, including brochures, banners, and marketing collateral.",
+        "Developed product illustrations, company logos, and trademark graphics.",
+        "Collaborated with clients to understand project requirements, objectives, and budgets.",
+        "Delivered projects on time and within budget."
+      ]
+    },
+    "achievements": {
+      "en": [
+        "Launched a corporate branding package.",
+        "Created impactful marketing collateral.",
+        "Earned recognition for creativity.",
+        "Improved workflow with new templates."
+      ]
+    }
+  }
+]

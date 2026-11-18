@@ -1,0 +1,6 @@
+[
+  {"category":{"en":"Web Development"},"items":["HTML5","CSS3","JavaScript","PHP","MySQL","WordPress","Joomla","Drupal","jQuery","AJAX","Bootstrap","Tailwind CSS","Flutter","Dart"]},
+  {"category":{"en":"Graphic Design"},"items":["Adobe Photoshop","Adobe Illustrator","Adobe InDesign","CorelDRAW","Figma","Dreamweaver"]},
+  {"category":{"en":"Motion & Video"},"items":["Adobe After Effects","Adobe Premiere Pro","Adobe Audition","Motion Graphics","Video Editing"]},
+  {"category":{"en":"Systems & Workflow"},"items":["Apache","Linux","Microsoft Office 365","UI/UX Design","Technical Reports","Project Coordination"]}
+]
