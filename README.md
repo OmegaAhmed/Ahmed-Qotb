@@ -16,7 +16,7 @@ npm run build
 npm run preview
 ```
 
-The Vite base path is `/AhmedQotb/`, matching the repository and GitHub Pages URL.
+The Vite base path is `/Ahmed-Qotb/`, matching the repository and GitHub Pages URL.
 
 ## Editing content
 
@@ -35,4 +35,4 @@ Set `visibility` to `false` to hide a project without deleting it. Lower `displa
 
 ## GitHub Pages deployment
 
-The workflow at `.github/workflows/deploy.yml` installs dependencies, builds the project, and deploys `dist` after pushes to `main`.
+Set the repository's Pages source to **GitHub Actions** in Settings > Pages. The workflow at `.github/workflows/deploy.yml` installs dependencies, builds the project, uploads `dist`, and deploys that artifact after pushes to `main`.

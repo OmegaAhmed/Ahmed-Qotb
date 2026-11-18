@@ -16,6 +16,7 @@ const experienceIcons = [Building2, Palette]
 const skillIcons = [Code2, PenTool, Film, Server]
 type Theme = 'dark' | 'light'
 const THEME_STORAGE_KEY = 'ahmed-qotb-theme'
+const publicAsset = (path: string | undefined) => path ? `${import.meta.env.BASE_URL}${path}` : undefined
 
 function getInitialTheme(): Theme {
   try {
@@ -227,7 +228,7 @@ function App() {
           </div>
         </div>
         <div className="hero-portrait" aria-label="Portrait of Ahmed Qotb">
-          <img src="images/profile/Ahmed.webp" alt="Portrait of Ahmed Qotb" fetchPriority="high"/>
+          <img src={publicAsset('images/profile/Ahmed.webp')} alt="Portrait of Ahmed Qotb" fetchPriority="high"/>
           <div className="hero-portrait-caption">
             <span>Ahmed Qotb</span>
             <b>Creative Technologist</b>
@@ -360,7 +361,7 @@ function App() {
                       <span><i/><i/><i/></span>
                       <b>PROJECT PREVIEW</b>
                     </div>
-                    <img src={project.thumbnail} alt={text(project.title)} loading="lazy"/>
+                    <img src={publicAsset(project.thumbnail)} alt={text(project.title)} loading="lazy"/>
                   </div>
                 ) : project.category === 'motion' ? (
                   <div className="motion-preview" aria-hidden="true">
@@ -369,7 +370,7 @@ function App() {
                     <span className="motion-preview-index">{String(project.displayOrder - 6).padStart(2, '0')}</span>
                   </div>
                 ) : (
-                  <img src={project.thumbnail} alt={text(project.title)} loading="lazy"/>
+                  <img src={publicAsset(project.thumbnail)} alt={text(project.title)} loading="lazy"/>
                 )}
                 {project.category === 'motion' && project.videoUrl ? (
                   <button
@@ -424,7 +425,7 @@ function App() {
                 onClick={() => openArtwork(artworkImages.indexOf(image))}
                 aria-label={`View artwork ${artworkImages.indexOf(image) + 1} of ${artworkImages.length}`}
               >
-                <img src={image} alt={`Graphic design work ${index + 1}`} loading="lazy"/>
+                <img src={publicAsset(image)} alt={`Graphic design work ${index + 1}`} loading="lazy"/>
               </button>
             )}
           </div>
@@ -503,7 +504,7 @@ function App() {
       <footer>
         <div className="brand"><span>A</span><b>Ahmed Qotb</b></div>
         <p>© 2026 Ahmed Qotb</p>
-        <a href="images/AhmedQotb-CV.pdf" download><Download size={16}/> CV</a>
+        <a href={publicAsset(settings.cv)} download><Download size={16}/> CV</a>
       </footer>
 
       {repos.length > 0 && (
@@ -549,7 +550,7 @@ function App() {
               <div className="project-modal-gallery">
                 {activeProject.gallery.map((image, index) => (
                   <button key={`${image}-${index}`} onClick={() => setLightbox(image)} aria-label={`Enlarge project image ${index + 1}`}>
-                    <img src={image} alt={`${text(activeProject.title)} screenshot ${index + 1}`}/>
+                    <img src={publicAsset(image)} alt={`${text(activeProject.title)} screenshot ${index + 1}`}/>
                   </button>
                 ))}
               </div>
@@ -571,7 +572,7 @@ function App() {
             </>
           )}
           <img
-            src={lightbox}
+            src={publicAsset(lightbox)}
             alt={lightboxIndex === null ? 'Expanded project image' : `Graphic design artwork ${lightboxIndex + 1} of ${artworkImages.length}`}
             onClick={event => event.stopPropagation()}
           />
@@ -587,7 +588,7 @@ function App() {
             </div>
             <video
               key={activeVideo.videoUrl}
-              src={activeVideo.videoUrl}
+              src={publicAsset(activeVideo.videoUrl)}
               controls
               autoPlay
               playsInline
