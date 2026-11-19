@@ -2,6 +2,8 @@
 
 A static React and TypeScript portfolio configured for GitHub Pages.
 
+The welcome screen is available at `/welcome` beneath the configured base path. It appears on the first visit in a browser session; selecting **Explore My Portfolio** or **Skip Intro** opens the main portfolio and prevents the intro from repeating during that session. The **Intro** navigation item reopens it at any time.
+
 ## Local development
 
 ```bash

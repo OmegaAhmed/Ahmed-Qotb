@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ahmed Qotb — Portfolio</title>
+  </head>
+  <body>
+    <script>
+      const pathParts = window.location.pathname.split('/').filter(Boolean);
+      const rootWelcome = pathParts.length === 1 && pathParts[0] === 'welcome';
+      const basePath = rootWelcome || pathParts.length === 0 ? '/' : `/${pathParts[0]}/`;
+      const route = rootWelcome ? 'welcome' : pathParts.slice(1).join('/');
+      window.location.replace(route === 'welcome' ? `${basePath}?intro=welcome` : basePath);
+    </script>
+  </body>
+</html>

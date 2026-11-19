@@ -30,13 +30,182 @@ function getInitialTheme(): Theme {
 
 const copy = {
   nav: ['About','Experience','Skills','Work','Education','Contact'],
-  role:'Senior Web Developer · Graphic & Motion Designer',
-  intro:'Building custom WordPress and web experiences, then bringing them to life through graphic design and motion.',
-  work:'View my work', contact:'Let’s talk',
 }
 const artworkImages = [...new Set(projects.find(project => project.category === 'graphic')?.gallery ?? [])]
+const INTRO_SESSION_KEY = 'ahmed-qotb-intro-seen'
 
-function App() {
+function isWelcomeRoute() {
+  if (new URLSearchParams(window.location.search).get('intro') === 'welcome') return true
+  return isWelcomePath()
+}
+
+function isWelcomePath() {
+  const basePath = new URL(import.meta.env.BASE_URL, window.location.origin).pathname
+  const basePrefix = basePath.endsWith('/') ? basePath : `${basePath}/`
+  const route = window.location.pathname.startsWith(basePrefix)
+    ? window.location.pathname.slice(basePrefix.length)
+    : window.location.pathname.replace(/^\/+/, '')
+  return route.replace(/\/+$/, '') === 'welcome'
+}
+
+function getRoutePath(route: 'home' | 'welcome') {
+  const baseUrl = new URL(import.meta.env.BASE_URL, window.location.origin)
+  return route === 'welcome' ? new URL('welcome', baseUrl).pathname : baseUrl.pathname
+}
+
+function hasEnteredPortfolio() {
+  try {
+    return window.sessionStorage.getItem(INTRO_SESSION_KEY) === 'true'
+  } catch (error) {
+    console.warn('Unable to read the intro visit preference.', error)
+    return false
+  }
+}
+
+function CreativeVisual({ className, portraitSrc }: { className: string; portraitSrc?: string }) {
+  return (
+    <div className={`creative-visual ${className}`} role="img" aria-label={portraitSrc ? "Ahmed Qotb's portrait within an abstract composition combining code, graphic design, and motion" : 'An abstract composition combining code, graphic design, and motion'}>
+      <div className="creative-visual-grid"/>
+      <div className="creative-visual-orbit creative-visual-orbit-outer"/>
+      <div className="creative-visual-orbit creative-visual-orbit-inner"/>
+      <div className={`creative-visual-object${portraitSrc ? ' has-portrait' : ''}`}>
+        {portraitSrc ? <img src={portraitSrc} alt="Portrait of Ahmed Qotb"/> : <span>A</span>}
+      </div>
+      <div className="creative-visual-spark"/>
+      <div className="creative-visual-card creative-visual-code">
+        <span><Code2 size={14} aria-hidden="true"/> DEVELOPMENT</span>
+        <code><i>&lt;idea</i> <b>/&gt;</b><br/><i>build(</i><b>impact</b><i>)</i></code>
+      </div>
+      <div className="creative-visual-card creative-visual-design">
+        <span><Palette size={14} aria-hidden="true"/> VISUAL DESIGN</span>
+        <div className="creative-design-shapes"><i/><i/><i/></div>
+      </div>
+      <div className="creative-visual-card creative-visual-motion">
+        <span><Film size={14} aria-hidden="true"/> MOTION</span>
+        <div className="creative-motion-frames"><i/><i/><i/><i/><i/></div>
+      </div>
+      <span className="creative-visual-coordinate">30° 02' N / 31° 14' E</span>
+    </div>
+  )
+}
+
+function AmbientCanvasBackground() {
+  const cursorLight = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const light = cursorLight.current
+    const screen = light?.closest('.intro-screen')
+    const canTrackPointer = window.matchMedia(
+      '(min-width: 1024px) and (pointer: fine) and (prefers-reduced-motion: no-preference)'
+    ).matches
+
+    if (!light || !screen || !canTrackPointer) return
+
+    let frame: number | null = null
+    let x = 0
+    let y = 0
+    let targetX = 0
+    let targetY = 0
+
+    const animateLight = () => {
+      frame = null
+      x += (targetX - x) * 0.08
+      y += (targetY - y) * 0.08
+      light.style.transform = `translate3d(${x}px, ${y}px, 0)`
+
+      if (Math.abs(targetX - x) > 0.1 || Math.abs(targetY - y) > 0.1) {
+        frame = window.requestAnimationFrame(animateLight)
+      }
+    }
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (event.pointerType !== 'mouse') return
+
+      const bounds = screen.getBoundingClientRect()
+      targetX = Math.max(-18, Math.min(18, (event.clientX - bounds.left - bounds.width / 2) * 0.035))
+      targetY = Math.max(-18, Math.min(18, (event.clientY - bounds.top - bounds.height / 2) * 0.035))
+
+      if (frame === null) frame = window.requestAnimationFrame(animateLight)
+    }
+
+    const resetPointer = () => {
+      targetX = 0
+      targetY = 0
+      if (frame === null) frame = window.requestAnimationFrame(animateLight)
+    }
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true })
+    screen.addEventListener('pointerleave', resetPointer, { passive: true })
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove)
+      screen.removeEventListener('pointerleave', resetPointer)
+      if (frame !== null) window.cancelAnimationFrame(frame)
+    }
+  }, [])
+
+  return (
+    <div className="ambient-canvas" aria-hidden="true">
+      <div className="ambient-mesh"/>
+      <div className="ambient-orb ambient-orb-cyan"/>
+      <div className="ambient-orb ambient-orb-blue"/>
+      <div className="ambient-orb ambient-orb-soft"/>
+      <div ref={cursorLight} className="ambient-cursor-light"/>
+      <div className="intro-atmosphere"><i/><i/><i/></div>
+    </div>
+  )
+}
+
+function WelcomeScreen({ onEnter, isExiting }: { onEnter: () => void; isExiting: boolean }) {
+  const [theme, setTheme] = useState<Theme>(() =>
+    document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+  )
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(nextTheme)
+    document.documentElement.dataset.theme = nextTheme
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', nextTheme === 'dark' ? '#0B1220' : '#F4F8FC')
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
+    } catch (error) {
+      console.warn('Unable to save the theme preference.', error)
+    }
+  }
+
+  return (
+    <main className={`intro-screen${isExiting ? ' is-exiting' : ''}`} aria-hidden={isExiting} inert={isExiting}>
+      <AmbientCanvasBackground/>
+      <header className="intro-header">
+        <p className="intro-brand-label"><span>A</span> PERSONAL PORTFOLIO</p>
+        <button className="icon-button" onClick={toggleTheme} aria-label="Toggle theme" aria-pressed={theme === 'light'}>
+          {theme === 'dark' ? <Sun size={18}/> : <Moon size={18}/>}
+        </button>
+      </header>
+      <section className="intro-content" aria-labelledby="intro-name">
+        <div className="intro-photo-frame">
+          <img
+            className="intro-photo"
+            src={publicAsset('images/profile/Ahmed.webp')}
+            alt="Portrait of Ahmed Qotb"
+            fetchPriority="high"
+          />
+        </div>
+        <p className="intro-greeting">WELCOME TO MY DIGITAL SPACE</p>
+        <h1 id="intro-name" className="intro-name">Ahmed <em>Qotb</em></h1>
+        <p className="intro-tagline">Where Creativity Meets <em>Technology.</em></p>
+        <p className="intro-profession">Senior Web Developer <span>·</span> Graphic Designer <span>·</span> Motion Graphics Artist</p>
+        <div className="intro-actions">
+          <button className="intro-enter" onClick={onEnter}>Enter My Portfolio <ArrowUpRight size={18}/></button>
+          <button className="intro-skip" onClick={onEnter}>Skip Intro</button>
+        </div>
+        <div className="intro-discover" aria-hidden="true"><span/> DISCOVER <ArrowDown size={14}/></div>
+      </section>
+    </main>
+  )
+}
+
+function Portfolio({ onShowIntro }: { onShowIntro: () => void }) {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [category, setCategory] = useState('all')
   const [lightbox, setLightbox] = useState<string | null>(null)
@@ -191,7 +360,7 @@ function App() {
   const text = (value: Localized) => value.en
 
   return (
-    <main>
+    <main className="portfolio-screen route-enter">
       <nav className="nav" aria-label="Primary navigation">
         <button className="brand" onClick={() => scrollTo('home')} aria-label="Home">
           <span>A</span><b>Ahmed Qotb</b>
@@ -200,6 +369,7 @@ function App() {
           {['about','experience','skills','work','education','contact'].map((id,index) =>
             <button className={activeSection === id ? 'active' : ''} key={id} onClick={() => scrollTo(id)} aria-current={activeSection === id ? 'location' : undefined}>{copy.nav[index]}</button>
           )}
+          <button className="nav-intro" onClick={() => { setMenuOpen(false); onShowIntro() }}>Intro</button>
         </div>
         <div className="nav-actions">
           <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu" aria-expanded={menuOpen} aria-controls="primary-nav-links">
@@ -213,74 +383,107 @@ function App() {
 
       <section id="home" className="hero section">
         <div className="hero-copy">
-          <div className="eyebrow"><span /> PORTFOLIO / 2026</div>
-          <h1>Ahmed<br/><em>Qotb.</em></h1>
-          <p className="role">{copy.role}</p>
-          <p className="intro">{copy.intro}</p>
+          <div className="eyebrow"><span/> SENIOR WEB DEVELOPER &amp; GRAPHIC DESIGNER</div>
+          <h1><span>I Turn Ideas{' '}</span><span>Into Digital{' '}</span><span>Experiences{' '}</span><span>That Stand <em>Out.</em></span></h1>
+          <p className="hero-intro">Creative thinking. Technical precision. Digital experiences built with purpose.</p>
           <div className="hero-actions">
-            <button className="primary" onClick={() => scrollTo('work')}>{copy.work} <ArrowDown size={17}/></button>
-            <button className="secondary" onClick={() => scrollTo('contact')}>{copy.contact} <ArrowUpRight size={17}/></button>
-          </div>
-          <div className="hero-social">
-            <a href={settings.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
-            <a href={settings.github} target="_blank" rel="noreferrer">GitHub</a>
-            <a href={`mailto:${settings.email}`}>Email</a>
+            <button className="primary" onClick={() => scrollTo('work')}>View My Work <ArrowDown size={17}/></button>
+            <button className="secondary" onClick={() => scrollTo('contact')}>Let’s Connect <ArrowUpRight size={17}/></button>
           </div>
         </div>
-        <div className="hero-portrait" aria-label="Portrait of Ahmed Qotb">
-          <img src={publicAsset('images/profile/Ahmed.webp')} alt="Portrait of Ahmed Qotb" fetchPriority="high"/>
-          <div className="hero-portrait-caption">
-            <span>Ahmed Qotb</span>
-            <b>Creative Technologist</b>
-          </div>
-        </div>
+        <CreativeVisual className="hero-visual" portraitSrc={publicAsset('images/profile/Ahmed.webp')}/>
       </section>
 
       <section id="about" className="about section reveal-on-scroll">
-        <div className="section-number">01</div>
-        <div className="section-heading">
-          <span>ABOUT</span>
-          <h2>Where code meets visual craft.</h2>
-        </div>
-        <div className="about-grid">
-          <div className="about-copy">
-            <p className="lead">I’m a Senior Web Developer and creative designer with more than 10 years of experience creating digital solutions and multimedia content.</p>
-            <p>My work spans front-end and back-end development, custom WordPress, graphic design, motion graphics, and video editing. I focus on practical experiences that are clear, engaging, and visually consistent.</p>
-            <div className="stats">
-              <div><strong>10+</strong><span>Years in digital work</span></div>
-              <div><strong>3</strong><span>Creative disciplines</span></div>
-              <div><strong>2012</strong><span>Started at BUE</span></div>
+        <div className="about-editorial">
+          <div className="about-introduction">
+            <header className="about-title-column">
+              <p className="about-label"><span>01 / ABOUT</span><span>DESIGN · DEVELOPMENT · MOTION</span></p>
+              <h2 className="about-title">A Creative Mind With a Developer's <span>Perspective.</span></h2>
+              <div className="about-title-detail" aria-hidden="true">
+                <span/>
+                <span/>
+                <span/>
+                <b>Precision with a creative point of view.</b>
+              </div>
+            </header>
+            <div className="about-copy">
+              <p className="lead">My professional journey brings together two worlds: the precision of development and the creativity of visual design. With expertise in front-end development, custom WordPress solutions, graphic design, and 2D motion graphics, I approach every project with a broader perspective.</p>
+              <p>Rather than seeing design and development as separate disciplines, I use them together to solve problems, communicate ideas, and create meaningful digital experiences. My focus is always on combining functionality, aesthetics, and attention to detail.</p>
             </div>
+          </div>
+          <div className="about-expertise">
+            <div className="about-subsection-heading">
+              <span>AREAS OF EXPERTISE</span>
+              <span>01 — 03</span>
+            </div>
+            <div className="about-expertise-grid">
+              <article className="about-expertise-card">
+                <div className="about-card-heading"><Code2 size={21} aria-hidden="true"/><span>01</span></div>
+                <h3>Web Development</h3>
+                <p>Modern websites, front-end experiences, and custom WordPress solutions.</p>
+                <div className="about-code-detail" aria-hidden="true"><span>&lt;/&gt;</span><i/><i/><i/></div>
+              </article>
+              <article className="about-expertise-card">
+                <div className="about-card-heading"><Palette size={21} aria-hidden="true"/><span>02</span></div>
+                <h3>Graphic Design</h3>
+                <p>Visual communication, digital design, and creative compositions.</p>
+                <div className="about-design-detail" aria-hidden="true"><i/><i/><i/><i/></div>
+              </article>
+              <article className="about-expertise-card">
+                <div className="about-card-heading"><Film size={21} aria-hidden="true"/><span>03</span></div>
+                <h3>Motion Graphics</h3>
+                <p>2D animation, visual storytelling, and engaging motion content.</p>
+                <div className="about-motion-detail" aria-hidden="true"><i/><i/><i/><i/><i/></div>
+              </article>
+            </div>
+          </div>
+          <div className="about-foundation">
+            <div className="about-highlights">
+              <span className="about-foundation-label">PROFESSIONAL HIGHLIGHTS</span>
+              <div className="about-highlight">
+                <strong>10+</strong><span>Years in digital work</span>
+              </div>
+              <div className="about-highlight">
+                <strong>03</strong><span>Connected creative disciplines</span>
+              </div>
+              <div className="about-tools" aria-label="Core areas">
+                <span>Front-end</span><span>WordPress</span><span>Graphic design</span><span>2D motion</span>
+              </div>
+            </div>
+            <aside className="about-approach">
+              <span className="about-foundation-label">MY APPROACH</span>
+              <h3>From Concept<br/>to <em>Execution.</em></h3>
+              <p>I balance analytical thinking with visual sensitivity, refining each decision with care.</p>
+            </aside>
           </div>
         </div>
       </section>
 
-      <section id="experience" className="experience section reveal-on-scroll">
+      <section id="experience" className="experience section reveal-on-scroll" aria-labelledby="experience-title">
         <div className="section-number">02</div>
-        <div className="section-heading">
-          <span>EXPERIENCE</span>
-          <h2>A career across code & design.</h2>
-        </div>
-        <div className="timeline">
+        <header className="career-heading content-container">
+          <span className="career-kicker"><i/> EXPERIENCE</span>
+          <h2 id="experience-title">A career across <span>code &amp; design.</span></h2>
+        </header>
+        <div className="career-grid content-container">
           {experience.map((item, index) => {
             const Icon = experienceIcons[index] ?? Building2
             return (
-              <article className="timeline-item reveal-on-scroll" key={item.company}>
-                <div className="timeline-card-header">
-                  <span className="timeline-period">{item.period}</span>
-                  <div className="timeline-icon"><Icon size={20} aria-hidden="true"/></div>
-                </div>
-                <div className="timeline-content">
-                  <div className="timeline-company">
-                    <span>{item.company}</span>
-                    <div className="timeline-index">0{index+1}</div>
-                  </div>
-                  <h3>{text(item.role)}</h3>
-                  <ul>{item.points.en.map(point => <li key={point}>{point}</li>)}</ul>
-                  <div className="timeline-achievements">
-                    <h4>Key achievements</h4>
-                    <ul>{item.achievements.en.map(achievement => <li key={achievement}>{achievement}</li>)}</ul>
-                  </div>
+              <article className="career-card reveal-on-scroll" key={item.company}>
+                <header className="career-card-header">
+                  <span className="career-period">{item.period}</span>
+                  <span className="career-index" aria-hidden="true">0{index+1}</span>
+                  <span className="career-icon" aria-hidden="true"><Icon size={19}/></span>
+                </header>
+                <p className="career-company">{item.company}</p>
+                <h3 className="career-role">{text(item.role)}</h3>
+                <ul className="career-points" aria-label="Responsibilities">
+                  {item.points.en.map(point => <li key={point}>{point}</li>)}
+                </ul>
+                <div className="career-achievements">
+                  <h4>Key achievements</h4>
+                  <ul>{item.achievements.en.map(achievement => <li key={achievement}>{achievement}</li>)}</ul>
                 </div>
               </article>
             )
@@ -315,7 +518,7 @@ function App() {
 
       <section id="work" className="work section reveal-on-scroll">
         <div className="section-number">04</div>
-        <div className="work-header">
+        <div className="work-header content-container">
           <div className="section-heading">
             <span>SELECTED WORK</span>
             <h2>Built, designed, animated.</h2>
@@ -351,7 +554,7 @@ function App() {
           </div>
         </div>
         {pagedProjectCards.length > 0 && (
-          <div className="project-grid">
+          <div className={`project-grid content-container project-grid-${category}`}>
           {pagedProjectCards.map((project) => (
             <article className={`project-card project-${project.category} reveal-on-scroll`} key={project.id}>
               <div className="project-media">
@@ -417,7 +620,7 @@ function App() {
         )}
 
         {filtered.some(p => p.category === 'graphic') && (
-          <div className="gallery-grid">
+          <div className="gallery-grid content-container">
             {pagedArtworkImages.map((image, index) =>
               <button
                 className="reveal-on-scroll"
@@ -431,7 +634,7 @@ function App() {
           </div>
         )}
         {pageCount > 1 && (
-          <nav className="project-pagination" aria-label="Project pagination">
+          <nav className="project-pagination content-container" aria-label="Project pagination">
             <button
               type="button"
               onClick={() => changePage(currentPage - 1)}
@@ -466,20 +669,20 @@ function App() {
 
       <section id="education" className="education section reveal-on-scroll">
         <div className="section-number">05</div>
-        <div className="section-heading">
+        <div className="section-heading content-container">
           <span>EDUCATION & CERTIFICATIONS</span>
           <h2>Learning, continuously.</h2>
         </div>
-        <h3 className="education-subheading">Education</h3>
-        <div className="education-grid">
+        <h3 className="education-subheading content-container">Education</h3>
+        <div className="education-grid content-container">
           {education.map(item =>
             <article className="education-card reveal-on-scroll" key={item.title.en}>
               <span>{item.period}</span><h3>{text(item.title)}</h3><p>{item.institution}</p>
             </article>
           )}
         </div>
-        <h3 className="education-subheading certification-subheading">Certificates & training</h3>
-        <div className="certification-list">
+        <h3 className="education-subheading certification-subheading content-container">Certificates & training</h3>
+        <div className="certification-list content-container">
           {certifications.map((item) =>
             <article className="reveal-on-scroll" key={item.title.en}><span>{item.period}</span><h3>{text(item.title)}</h3><p>{item.institution}</p></article>
           )}
@@ -488,16 +691,35 @@ function App() {
 
       <section id="contact" className="contact section reveal-on-scroll">
         <div className="contact-orb"/>
-        <div>
-          <span>START A CONVERSATION</span>
-          <h2>Have a project in mind?</h2>
-          <a className="contact-cta" href={`mailto:${settings.email}`}>Let’s work together <ArrowUpRight size={16}/></a>
-        </div>
-        <div className="contact-links">
-          <a className="reveal-on-scroll" href={`mailto:${settings.email}`}><Mail size={19}/><span>Email</span><b>{settings.email}</b></a>
-          <a className="reveal-on-scroll" href={`tel:${settings.phone.replace(/[^\d+]/g, '')}`}><Phone size={19}/><span>Phone</span><b>{settings.phone}</b></a>
-          <a className="reveal-on-scroll" href={settings.linkedin} target="_blank" rel="noreferrer"><ExternalLink size={19}/><span>LinkedIn</span><b>Ahmed Kotb</b></a>
-          <a className="reveal-on-scroll" href={settings.github} target="_blank" rel="noreferrer"><Code2 size={19}/><span>GitHub</span><b>@OmegaAhmed</b></a>
+        <div className="contact-content content-container">
+          <div className="contact-intro">
+            <span>START A CONVERSATION</span>
+            <h2><span>Have a</span><em>project in mind?</em></h2>
+            <p>Let’s talk about what you’re building and how thoughtful design and development can bring it to life.</p>
+            <a className="contact-cta" href={`mailto:${settings.email}`}>Let’s work together <ArrowUpRight size={17}/></a>
+          </div>
+          <div className="contact-links">
+            <a className="contact-card reveal-on-scroll" href={`mailto:${settings.email}`}>
+              <span className="contact-icon"><Mail size={19}/></span>
+              <span className="contact-detail"><span>Email</span><b>{settings.email}</b></span>
+              <ArrowUpRight className="contact-link-arrow" size={18} aria-hidden="true"/>
+            </a>
+            <a className="contact-card reveal-on-scroll" href={`tel:${settings.phone.replace(/[^\d+]/g, '')}`}>
+              <span className="contact-icon"><Phone size={19}/></span>
+              <span className="contact-detail"><span>Phone</span><b>{settings.phone}</b></span>
+              <ArrowUpRight className="contact-link-arrow" size={18} aria-hidden="true"/>
+            </a>
+            <a className="contact-card reveal-on-scroll" href={settings.linkedin} target="_blank" rel="noreferrer">
+              <span className="contact-icon"><ExternalLink size={19}/></span>
+              <span className="contact-detail"><span>LinkedIn</span><b>Ahmed Kotb</b></span>
+              <ArrowUpRight className="contact-link-arrow" size={18} aria-hidden="true"/>
+            </a>
+            <a className="contact-card reveal-on-scroll" href={settings.github} target="_blank" rel="noreferrer">
+              <span className="contact-icon"><Code2 size={19}/></span>
+              <span className="contact-detail"><span>GitHub</span><b>@OmegaAhmed</b></span>
+              <ArrowUpRight className="contact-link-arrow" size={18} aria-hidden="true"/>
+            </a>
+          </div>
         </div>
       </section>
 
@@ -600,6 +822,79 @@ function App() {
         </div>
       )}
     </main>
+  )
+}
+
+function App() {
+  const [showWelcome, setShowWelcome] = useState(() => isWelcomeRoute() || !hasEnteredPortfolio())
+  const [showPortfolio, setShowPortfolio] = useState(() => !isWelcomeRoute() && hasEnteredPortfolio())
+  const [isExiting, setIsExiting] = useState(false)
+  const welcomeExitTimer = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (showWelcome && !isWelcomePath()) {
+      window.history.replaceState(null, '', getRoutePath('welcome'))
+    }
+
+    const handlePopState = () => {
+      if (welcomeExitTimer.current !== null) {
+        window.clearTimeout(welcomeExitTimer.current)
+        welcomeExitTimer.current = null
+      }
+      setIsExiting(false)
+      if (!isWelcomeRoute() && !hasEnteredPortfolio()) {
+        window.history.replaceState(null, '', getRoutePath('welcome'))
+        setShowWelcome(true)
+        setShowPortfolio(false)
+        return
+      }
+      const shouldShowWelcome = isWelcomeRoute()
+      setShowWelcome(shouldShowWelcome)
+      setShowPortfolio(!shouldShowWelcome)
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [showWelcome])
+
+  useEffect(() => () => {
+    if (welcomeExitTimer.current !== null) window.clearTimeout(welcomeExitTimer.current)
+  }, [])
+
+  const enterPortfolio = () => {
+    if (welcomeExitTimer.current !== null) return
+    try {
+      window.sessionStorage.setItem(INTRO_SESSION_KEY, 'true')
+    } catch (error) {
+      console.warn('Unable to save the intro visit preference.', error)
+    }
+    window.history.pushState(null, '', getRoutePath('home'))
+    setShowPortfolio(true)
+    setIsExiting(true)
+    const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 520
+    welcomeExitTimer.current = window.setTimeout(() => {
+      welcomeExitTimer.current = null
+      setIsExiting(false)
+      setShowWelcome(false)
+    }, duration)
+  }
+
+  const showIntro = () => {
+    if (welcomeExitTimer.current !== null) {
+      window.clearTimeout(welcomeExitTimer.current)
+      welcomeExitTimer.current = null
+    }
+    window.history.pushState(null, '', getRoutePath('welcome'))
+    setIsExiting(false)
+    setShowPortfolio(false)
+    setShowWelcome(true)
+  }
+
+  return (
+    <>
+      {showPortfolio && <Portfolio onShowIntro={showIntro}/>}
+      {showWelcome && <WelcomeScreen onEnter={enterPortfolio} isExiting={isExiting}/>}
+    </>
   )
 }
 
