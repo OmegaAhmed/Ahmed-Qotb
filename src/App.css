@@ -961,6 +961,17 @@ footer {
   }
 }
 
+.video-modal-content {
+  width: min(900px, 90vw);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+}
+
+.video-modal video {
+  max-height: min(70vh, calc(100dvh - 150px));
+  object-fit: contain;
+}
+
 @media (max-width: 360px) {
   .hero-actions {
     grid-template-columns: 1fr;

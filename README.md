@@ -18,7 +18,7 @@ npm run build
 npm run preview
 ```
 
-The Vite base path is configured in `vite.config.ts`. Project asset paths below are relative to `public/`; the app applies the configured base path automatically.
+The Vite base path is configured as `/Ahmed-Qotb/` in `vite.config.ts` for this GitHub Pages project. Project asset paths below are relative to `public/`; the app applies the configured base path automatically.
 
 ## Editing content
 

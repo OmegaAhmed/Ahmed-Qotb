@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   ArrowDown, ArrowUpRight, Building2, Code2, Film, Palette, PenTool, Server,
   ChevronLeft, ChevronRight, Mail, Moon, Phone, Sun, X, Play, ExternalLink, Download
@@ -411,7 +412,10 @@ function Portfolio({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () =
   }, [category])
 
   const changePage = (page:number) => {
-    setCurrentPage(Math.min(pageCount, Math.max(1, page)))
+    const nextPage = Math.min(pageCount, Math.max(1, page))
+    if (nextPage === currentPage) return
+    setCurrentPage(nextPage)
+    document.getElementById('work')?.scrollIntoView({ behavior:'smooth' })
   }
 
   const scrollTo = (id:string) => {
@@ -872,7 +876,7 @@ function Portfolio({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () =
           />
         </div>
       )}
-      {activeVideo && (
+      {activeVideo && createPortal(
         <div className="video-modal" role="dialog" aria-modal="true" aria-labelledby="active-video-title" onClick={() => setActiveVideo(null)}>
           <button className="video-modal-close" aria-label="Close video" onClick={() => setActiveVideo(null)}><X/></button>
           <div className="video-modal-content" onClick={(event) => event.stopPropagation()}>
@@ -891,7 +895,8 @@ function Portfolio({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () =
               Your browser does not support HTML5 video.
             </video>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
       </main>
     </>
