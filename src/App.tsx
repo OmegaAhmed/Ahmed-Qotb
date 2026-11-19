@@ -29,7 +29,7 @@ function getInitialTheme(): Theme {
 }
 
 const copy = {
-  nav: ['About','Skills','Work','Experience','Contact'],
+  nav: ['About','Experience','Skills','Work','Education','Contact'],
 }
 const artworkImages = [...new Set(projects.find(project => project.category === 'graphic')?.gallery ?? [])]
 const INTRO_SESSION_KEY = 'ahmed-qotb-intro-seen'
@@ -289,7 +289,7 @@ function Portfolio({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () =
   }, [])
 
   useEffect(() => {
-    const ids = ['home','about','skills','work','experience','contact']
+    const ids = ['home','about','experience','skills','work','education','contact']
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.target.id === 'home' || entry.target.id === 'contact') {
@@ -438,7 +438,7 @@ function Portfolio({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () =
           <span>A</span><b>Ahmed Qotb</b>
         </button>
         <div id="primary-nav-links" className={`nav-links ${menuOpen ? 'open' : ''}`}>
-          {['about','skills','work','experience','contact'].map((id,index) =>
+          {['about','experience','skills','work','education','contact'].map((id,index) =>
             <button className={activeSection === id ? 'active' : ''} key={id} onClick={() => scrollTo(id)} aria-current={activeSection === id ? 'location' : undefined}>{copy.nav[index]}</button>
           )}
         </div>
