@@ -25,7 +25,7 @@ function getInitialTheme(): Theme {
   } catch (error) {
     console.warn('Unable to read the saved theme preference.', error)
   }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  return 'dark'
 }
 
 const copy = {
@@ -230,35 +230,18 @@ function AmbientCanvasBackground() {
   )
 }
 
-function WelcomeScreen({ onEnter, isExiting }: { onEnter: () => void; isExiting: boolean }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    try {
-      const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
-      if (savedTheme === 'dark' || savedTheme === 'light') return savedTheme
-    } catch (error) {
-      console.warn('Unable to read the theme preference.', error)
-    }
-    return 'dark'
-  })
-
-  const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark'
-    setTheme(nextTheme)
-    document.documentElement.dataset.theme = nextTheme
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', nextTheme === 'dark' ? '#0B1220' : '#F4F8FC')
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
-    } catch (error) {
-      console.warn('Unable to save the theme preference.', error)
-    }
-  }
-
+function WelcomeScreen({ onEnter, isExiting, theme, onToggleTheme }: {
+  onEnter: () => void
+  isExiting: boolean
+  theme: Theme
+  onToggleTheme: () => void
+}) {
   return (
-    <main className={`intro-screen${isExiting ? ' is-exiting' : ''}`} data-theme={theme} aria-hidden={isExiting} inert={isExiting}>
+    <main className={`intro-screen${isExiting ? ' is-exiting' : ''}`} aria-hidden={isExiting} inert={isExiting}>
       <AmbientCanvasBackground/>
       <header className="intro-header">
         <p className="intro-brand-label"><span>A</span> Ahmed Qotb</p>
-        <button className="icon-button" onClick={toggleTheme} aria-label="Toggle theme" aria-pressed={theme === 'light'}>
+        <button className="icon-button" onClick={onToggleTheme} aria-label="Toggle theme" aria-pressed={theme === 'light'}>
           {theme === 'dark' ? <Sun size={18}/> : <Moon size={18}/>}
         </button>
       </header>
@@ -285,8 +268,7 @@ function WelcomeScreen({ onEnter, isExiting }: { onEnter: () => void; isExiting:
   )
 }
 
-function Portfolio() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme)
+function Portfolio({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () => void }) {
   const [category, setCategory] = useState('all')
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
@@ -305,16 +287,6 @@ function Portfolio() {
     document.documentElement.lang = 'en'
     document.documentElement.dir = 'ltr'
   }, [])
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0B1220' : '#F4F8FC')
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, theme)
-    } catch (error) {
-      console.warn('Unable to save the theme preference.', error)
-    }
-  }, [theme])
 
   useEffect(() => {
     const ids = ['home','about','skills','work','experience','contact']
@@ -474,7 +446,7 @@ function Portfolio() {
           <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu" aria-expanded={menuOpen} aria-controls="primary-nav-links">
             <span/><span/>
           </button>
-          <button className="icon-button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle theme" aria-pressed={theme === 'light'}>
+          <button className="icon-button" onClick={onToggleTheme} aria-label="Toggle theme" aria-pressed={theme === 'light'}>
             {theme === 'dark' ? <Sun size={18}/> : <Moon size={18}/>}
           </button>
         </div>
@@ -927,10 +899,32 @@ function Portfolio() {
 }
 
 function App() {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [showWelcome, setShowWelcome] = useState(() => isWelcomeRoute() || !hasEnteredPortfolio())
   const [showPortfolio, setShowPortfolio] = useState(() => !isWelcomeRoute() && hasEnteredPortfolio())
   const [isExiting, setIsExiting] = useState(false)
   const welcomeExitTimer = useRef<number | null>(null)
+  const themeTransitionTimer = useRef<number | null>(null)
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark'
+    const root = document.documentElement
+    root.dataset.theme = nextTheme
+    root.classList.add('theme-transition')
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', nextTheme === 'dark' ? '#0B1220' : '#F4F8FC')
+    setTheme(nextTheme)
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme)
+    } catch (error) {
+      console.warn('Unable to save the theme preference.', error)
+    }
+
+    if (themeTransitionTimer.current !== null) window.clearTimeout(themeTransitionTimer.current)
+    themeTransitionTimer.current = window.setTimeout(() => {
+      root.classList.remove('theme-transition')
+      themeTransitionTimer.current = null
+    }, 320)
+  }
 
   useEffect(() => {
     if (showWelcome && !isWelcomePath()) {
@@ -960,6 +954,7 @@ function App() {
 
   useEffect(() => () => {
     if (welcomeExitTimer.current !== null) window.clearTimeout(welcomeExitTimer.current)
+    if (themeTransitionTimer.current !== null) window.clearTimeout(themeTransitionTimer.current)
   }, [])
 
   const enterPortfolio = () => {
@@ -982,8 +977,8 @@ function App() {
 
   return (
     <>
-      {showPortfolio && <Portfolio/>}
-      {showWelcome && <WelcomeScreen onEnter={enterPortfolio} isExiting={isExiting}/>}
+      {showPortfolio && <Portfolio theme={theme} onToggleTheme={toggleTheme}/>}
+      {showWelcome && <WelcomeScreen onEnter={enterPortfolio} isExiting={isExiting} theme={theme} onToggleTheme={toggleTheme}/>}
     </>
   )
 }
