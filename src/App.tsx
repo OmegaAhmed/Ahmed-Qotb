@@ -91,6 +91,7 @@ function CreativeVisual({ className, portraitSrc }: { className: string; portrai
 
 function AmbientCanvasBackground() {
   const cursorLight = useRef<HTMLDivElement>(null)
+  const flowLines = useRef<SVGSVGElement>(null)
 
   useEffect(() => {
     const light = cursorLight.current
@@ -144,6 +145,31 @@ function AmbientCanvasBackground() {
     }
   }, [])
 
+  useEffect(() => {
+    const svg = flowLines.current
+    if (!svg) return
+
+    let isVisible = true
+    const updatePlayback = () => {
+      svg.classList.toggle('is-paused', document.hidden || !isVisible)
+    }
+    const observer = typeof IntersectionObserver === 'undefined'
+      ? null
+      : new IntersectionObserver(([entry]) => {
+          isVisible = entry.isIntersecting
+          updatePlayback()
+        })
+
+    observer?.observe(svg)
+    document.addEventListener('visibilitychange', updatePlayback)
+    updatePlayback()
+
+    return () => {
+      observer?.disconnect()
+      document.removeEventListener('visibilitychange', updatePlayback)
+    }
+  }, [])
+
   return (
     <div className="ambient-canvas" aria-hidden="true">
       <div className="ambient-mesh"/>
@@ -151,15 +177,69 @@ function AmbientCanvasBackground() {
       <div className="ambient-orb ambient-orb-blue"/>
       <div className="ambient-orb ambient-orb-soft"/>
       <div ref={cursorLight} className="ambient-cursor-light"/>
-      <div className="intro-atmosphere"><i/><i/><i/></div>
+      <svg
+        ref={flowLines}
+        className="intro-flow-lines"
+        viewBox="0 0 1600 900"
+        preserveAspectRatio="none"
+        focusable="false"
+      >
+        <defs>
+          <linearGradient id="intro-flow-gradient" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#22D3EE" stopOpacity=".3"/>
+            <stop offset="34%" stopColor="#0284C7" stopOpacity=".66"/>
+            <stop offset="68%" stopColor="#38BDF8" stopOpacity=".82"/>
+            <stop offset="100%" stopColor="#67E8F9" stopOpacity=".42"/>
+          </linearGradient>
+          <mask id="intro-flow-center-fade">
+            <radialGradient id="intro-flow-mask-gradient" cx="50%" cy="49%" r="70%">
+              <stop offset="0%" stopColor="white" stopOpacity=".12"/>
+              <stop offset="42%" stopColor="white" stopOpacity=".2"/>
+              <stop offset="76%" stopColor="white" stopOpacity=".8"/>
+              <stop offset="100%" stopColor="white"/>
+            </radialGradient>
+            <rect width="1600" height="900" fill="url(#intro-flow-mask-gradient)"/>
+          </mask>
+        </defs>
+        <g mask="url(#intro-flow-center-fade)">
+          <g className="flow-cluster flow-cluster-a">
+            <path className="flow-base flow-prominent flow-desktop" d="M-120 155 C120 28 282 290 505 194 S842 48 1080 172 1454 280 1720 112"/>
+            <path className="flow-base flow-secondary flow-desktop" d="M-120 230 C108 114 274 358 512 264 S851 116 1086 243 1454 354 1720 183"/>
+            <path className="flow-base flow-secondary flow-tablet" d="M-120 335 C152 245 304 412 540 350 S910 222 1152 322 1450 423 1720 274"/>
+            <path className="flow-base flow-desktop" d="M-120 492 C138 365 314 542 548 470 S902 352 1154 453 1465 562 1720 390"/>
+            <path className="flow-base flow-prominent flow-mobile" d="M-120 592 C130 470 320 635 560 568 S918 440 1160 542 1475 650 1720 483"/>
+            <path className="flow-base flow-prominent flow-desktop" d="M-120 700 C162 558 315 768 578 680 S928 535 1176 650 1460 752 1720 575"/>
+            <path className="flow-base flow-tablet" d="M-120 790 C148 650 350 840 592 768 S946 620 1196 725 1480 840 1720 663"/>
+            <path className="flow-base flow-mobile" d="M-120 875 C170 728 352 912 620 836 S986 689 1224 798 1500 918 1720 754"/>
+          </g>
+          <g className="flow-cluster flow-cluster-b">
+            <path className="flow-base flow-prominent flow-desktop" d="M-90 58 C160 142 300 -18 526 76 S884 205 1110 94 1450 -10 1690 80"/>
+            <path className="flow-base flow-tablet" d="M-100 400 C140 530 330 330 565 410 S906 565 1164 452 1458 330 1700 430"/>
+            <path className="flow-base flow-desktop" d="M-120 545 C128 650 330 470 566 550 S918 696 1165 580 1465 468 1720 560"/>
+            <path className="flow-base flow-mobile" d="M-120 755 C152 854 344 675 596 750 S954 898 1204 782 1490 675 1720 770"/>
+          </g>
+          <g className="flow-highlight-cluster">
+            <path pathLength="1640" className="flow-highlight flow-highlight-primary flow-highlight-slow flow-desktop" d="M-120 155 C120 28 282 290 505 194 S842 48 1080 172 1454 280 1720 112"/>
+            <path pathLength="1640" className="flow-highlight flow-highlight-medium flow-mobile" d="M-120 592 C130 470 320 635 560 568 S918 440 1160 542 1475 650 1720 483"/>
+            <path pathLength="1640" className="flow-highlight flow-highlight-primary flow-highlight-slow flow-desktop" d="M-120 700 C162 558 315 768 578 680 S928 535 1176 650 1460 752 1720 575"/>
+            <path pathLength="1640" className="flow-highlight flow-highlight-fast flow-tablet" d="M-90 58 C160 142 300 -18 526 76 S884 205 1110 94 1450 -10 1690 80"/>
+          </g>
+        </g>
+      </svg>
     </div>
   )
 }
 
 function WelcomeScreen({ onEnter, isExiting }: { onEnter: () => void; isExiting: boolean }) {
-  const [theme, setTheme] = useState<Theme>(() =>
-    document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
-  )
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY)
+      if (savedTheme === 'dark' || savedTheme === 'light') return savedTheme
+    } catch (error) {
+      console.warn('Unable to read the theme preference.', error)
+    }
+    return 'dark'
+  })
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark'
@@ -174,7 +254,7 @@ function WelcomeScreen({ onEnter, isExiting }: { onEnter: () => void; isExiting:
   }
 
   return (
-    <main className={`intro-screen${isExiting ? ' is-exiting' : ''}`} aria-hidden={isExiting} inert={isExiting}>
+    <main className={`intro-screen${isExiting ? ' is-exiting' : ''}`} data-theme={theme} aria-hidden={isExiting} inert={isExiting}>
       <AmbientCanvasBackground/>
       <header className="intro-header">
         <p className="intro-brand-label"><span>A</span> Ahmed Qotb</p>
