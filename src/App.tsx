@@ -29,7 +29,7 @@ function getInitialTheme(): Theme {
 }
 
 const copy = {
-  nav: ['About','Experience','Skills','Work','Education','Contact'],
+  nav: ['About','Skills','Work','Experience','Contact'],
 }
 const artworkImages = [...new Set(projects.find(project => project.category === 'graphic')?.gallery ?? [])]
 const INTRO_SESSION_KEY = 'ahmed-qotb-intro-seen'
@@ -177,7 +177,7 @@ function WelcomeScreen({ onEnter, isExiting }: { onEnter: () => void; isExiting:
     <main className={`intro-screen${isExiting ? ' is-exiting' : ''}`} aria-hidden={isExiting} inert={isExiting}>
       <AmbientCanvasBackground/>
       <header className="intro-header">
-        <p className="intro-brand-label"><span>A</span> PERSONAL PORTFOLIO</p>
+        <p className="intro-brand-label"><span>A</span> Ahmed Qotb</p>
         <button className="icon-button" onClick={toggleTheme} aria-label="Toggle theme" aria-pressed={theme === 'light'}>
           {theme === 'dark' ? <Sun size={18}/> : <Moon size={18}/>}
         </button>
@@ -205,7 +205,7 @@ function WelcomeScreen({ onEnter, isExiting }: { onEnter: () => void; isExiting:
   )
 }
 
-function Portfolio({ onShowIntro }: { onShowIntro: () => void }) {
+function Portfolio() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [category, setCategory] = useState('all')
   const [lightbox, setLightbox] = useState<string | null>(null)
@@ -237,7 +237,7 @@ function Portfolio({ onShowIntro }: { onShowIntro: () => void }) {
   }, [theme])
 
   useEffect(() => {
-    const ids = ['home','about','experience','skills','work','education','contact']
+    const ids = ['home','about','skills','work','experience','contact']
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.target.id === 'home' || entry.target.id === 'contact') {
@@ -246,14 +246,34 @@ function Portfolio({ onShowIntro }: { onShowIntro: () => void }) {
       })
       const visible = entries
         .filter(entry => entry.isIntersecting)
-        .sort((a,b) => b.intersectionRatio - a.intersectionRatio)[0]
+        .sort((a, b) => {
+          const activationLine = 72 + window.innerHeight * 0.14
+          const aDistance = Math.abs(a.boundingClientRect.top - activationLine)
+          const bDistance = Math.abs(b.boundingClientRect.top - activationLine)
+          return aDistance - bDistance
+        })[0]
       if (visible) setActiveSection(visible.target.id)
-    }, { rootMargin:'-10% 0px -10%', threshold:[0.05,0.25,0.5] })
+    }, { rootMargin:'-72px 0px -72% 0px', threshold:0 })
     ids.forEach(id => {
       const element = document.getElementById(id)
       if (element) observer.observe(element)
     })
-    return () => observer.disconnect()
+
+    const syncHashTarget = () => {
+      const id = decodeURIComponent(window.location.hash.slice(1))
+      if (!ids.includes(id)) return
+      setActiveSection(id)
+      document.getElementById(id)?.scrollIntoView({ behavior:'auto', block:'start' })
+    }
+
+    const initialHashFrame = window.requestAnimationFrame(syncHashTarget)
+    window.addEventListener('hashchange', syncHashTarget)
+
+    return () => {
+      observer.disconnect()
+      window.cancelAnimationFrame(initialHashFrame)
+      window.removeEventListener('hashchange', syncHashTarget)
+    }
   }, [])
 
   useEffect(() => {
@@ -360,16 +380,15 @@ function Portfolio({ onShowIntro }: { onShowIntro: () => void }) {
   const text = (value: Localized) => value.en
 
   return (
-    <main className="portfolio-screen route-enter">
+    <>
       <nav className="nav" aria-label="Primary navigation">
-        <button className="brand" onClick={() => scrollTo('home')} aria-label="Home">
+        <button className={`brand ${activeSection === 'home' ? 'active' : ''}`} onClick={() => scrollTo('home')} aria-label="Home" aria-current={activeSection === 'home' ? 'location' : undefined}>
           <span>A</span><b>Ahmed Qotb</b>
         </button>
         <div id="primary-nav-links" className={`nav-links ${menuOpen ? 'open' : ''}`}>
-          {['about','experience','skills','work','education','contact'].map((id,index) =>
+          {['about','skills','work','experience','contact'].map((id,index) =>
             <button className={activeSection === id ? 'active' : ''} key={id} onClick={() => scrollTo(id)} aria-current={activeSection === id ? 'location' : undefined}>{copy.nav[index]}</button>
           )}
-          <button className="nav-intro" onClick={() => { setMenuOpen(false); onShowIntro() }}>Intro</button>
         </div>
         <div className="nav-actions">
           <button className="menu-button" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu" aria-expanded={menuOpen} aria-controls="primary-nav-links">
@@ -381,6 +400,7 @@ function Portfolio({ onShowIntro }: { onShowIntro: () => void }) {
         </div>
       </nav>
 
+      <main className="portfolio-screen route-enter">
       <section id="home" className="hero section">
         <div className="hero-copy">
           <div className="eyebrow"><span/> SENIOR WEB DEVELOPER &amp; GRAPHIC DESIGNER</div>
@@ -821,7 +841,8 @@ function Portfolio({ onShowIntro }: { onShowIntro: () => void }) {
           </div>
         </div>
       )}
-    </main>
+      </main>
+    </>
   )
 }
 
@@ -879,20 +900,9 @@ function App() {
     }, duration)
   }
 
-  const showIntro = () => {
-    if (welcomeExitTimer.current !== null) {
-      window.clearTimeout(welcomeExitTimer.current)
-      welcomeExitTimer.current = null
-    }
-    window.history.pushState(null, '', getRoutePath('welcome'))
-    setIsExiting(false)
-    setShowPortfolio(false)
-    setShowWelcome(true)
-  }
-
   return (
     <>
-      {showPortfolio && <Portfolio onShowIntro={showIntro}/>}
+      {showPortfolio && <Portfolio/>}
       {showWelcome && <WelcomeScreen onEnter={enterPortfolio} isExiting={isExiting}/>}
     </>
   )

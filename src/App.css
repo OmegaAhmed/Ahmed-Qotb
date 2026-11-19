@@ -49,6 +49,8 @@ main { min-height:100vh; overflow:hidden; }
   box-shadow:0 14px 40px var(--shadow);
 }
 .brand { display:flex; align-items:center; gap:9px; border:0; background:none; color:var(--text); padding:0; }
+.brand span { transition:background var(--motion-standard) var(--ease-standard),border-color var(--motion-standard) var(--ease-standard),box-shadow var(--motion-standard) var(--ease-standard); }
+.brand.active span { border-color:var(--accent); background:color-mix(in srgb,var(--accent) 10%,transparent); box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 8%,transparent); }
 .brand span { width:34px; height:34px; display:grid; place-items:center; border:1px solid var(--line); border-radius:8px; font:700 14px var(--serif); }
 .brand b { font-size:12px; letter-spacing:.01em; }
 .nav-links { justify-self:center; display:flex; align-items:center; gap:2px; }
@@ -1733,14 +1735,6 @@ footer {
   }
 }
 
-.nav-links .nav-intro {
-  color: var(--color-accent-contrast);
-}
-
-.nav-links .nav-intro::after {
-  background: var(--accent);
-}
-
 .portfolio-screen.route-enter {
   animation: portfolio-arrive 480ms var(--ease-enter) both;
 }
@@ -2331,9 +2325,6 @@ footer {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .nav-links .nav-intro {
-    text-align: left;
-  }
 }
 
 @media (max-width: 760px) {
