@@ -856,7 +856,7 @@ function Portfolio({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () =
           </div>
         </div>
       )}
-      {lightbox && (
+      {lightbox && createPortal(
         <div className="lightbox" role="dialog" aria-modal="true" aria-label="Image preview" onClick={closeLightbox}>
           <button ref={lightboxCloseButton} className="lightbox-close" aria-label="Close preview" onClick={closeLightbox}><X/></button>
           {lightboxIndex !== null && artworkImages.length > 1 && (
@@ -874,7 +874,8 @@ function Portfolio({ theme, onToggleTheme }: { theme: Theme; onToggleTheme: () =
             alt={lightboxIndex === null ? 'Expanded project image' : `Graphic design artwork ${lightboxIndex + 1} of ${artworkImages.length}`}
             onClick={event => event.stopPropagation()}
           />
-        </div>
+        </div>,
+        document.body
       )}
       {activeVideo && createPortal(
         <div className="video-modal" role="dialog" aria-modal="true" aria-labelledby="active-video-title" onClick={() => setActiveVideo(null)}>
